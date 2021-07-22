@@ -17,6 +17,7 @@
 #include <mavsdk/plugins/action/action.h>
 #include <mavsdk/plugins/offboard/offboard.h>
 #include <mavsdk/plugins/mocap/mocap.h>
+#include <mavsdk/plugins/telemetry/telemetry.h>
 
 using namespace mavsdk;
 using std::chrono::milliseconds;
@@ -61,137 +62,6 @@ inline void offboard_log(const std::string& offb_mode, const std::string msg)
 }
 
 /**
- * Does Offboard control using NED co-ordinates.
- *
- * returns true if everything went well in Offboard control, exits with a log
- * otherwise.
- */
-bool offb_ctrl_ned(mavsdk::Offboard& offboard)
-{
-    const std::string offb_mode = "NED";
-    // Send it once before starting offboard, otherwise it will be rejected.
-    const Offboard::VelocityNedYaw stay{};
-    offboard.set_velocity_ned(stay);
-
-    Offboard::Result offboard_result = offboard.start();
-    offboard_error_exit(offboard_result, "Offboard start failed");
-    offboard_log(offb_mode, "Offboard started");
-
-    offboard_log(offb_mode, "Turn to face East");
-
-    Offboard::VelocityNedYaw turn_east{};
-    turn_east.yaw_deg = 90.0f;
-    offboard.set_velocity_ned(turn_east);
-    sleep_for(seconds(1)); // Let yaw settle.
-
-    {
-        const float step_size = 0.01f;
-        const float one_cycle = 2.0f * (float)M_PI;
-        const unsigned steps = 2 * unsigned(one_cycle / step_size);
-
-        offboard_log(offb_mode, "Go North and back South");
-        for (unsigned i = 0; i < steps; ++i) {
-            float vx = 5.0f * sinf(i * step_size);
-            Offboard::VelocityNedYaw north_and_back_south{};
-            north_and_back_south.north_m_s = vx;
-            north_and_back_south.yaw_deg = 90.0f;
-            offboard.set_velocity_ned(north_and_back_south);
-            sleep_for(milliseconds(10));
-        }
-    }
-
-    offboard_log(offb_mode, "Turn to face West");
-    Offboard::VelocityNedYaw turn_west{};
-    turn_west.yaw_deg = 270.0f;
-    offboard.set_velocity_ned(turn_west);
-    sleep_for(seconds(2));
-
-    offboard_log(offb_mode, "Go up 2 m/s, turn to face South");
-    Offboard::VelocityNedYaw up_and_south{};
-    up_and_south.down_m_s = -2.0f;
-    up_and_south.yaw_deg = 180.0f;
-    offboard.set_velocity_ned(up_and_south);
-    sleep_for(seconds(4));
-
-    offboard_log(offb_mode, "Go down 1 m/s, turn to face North");
-    Offboard::VelocityNedYaw down_and_north{};
-    up_and_south.down_m_s = 1.0f;
-    offboard.set_velocity_ned(down_and_north);
-    sleep_for(seconds(4));
-
-    // Now, stop offboard mode.
-    offboard_result = offboard.stop();
-    offboard_error_exit(offboard_result, "Offboard stop failed: ");
-    offboard_log(offb_mode, "Offboard stopped");
-
-    return true;
-}
-
-/**
- * Does Offboard control using body co-ordinates.
- *
- * returns true if everything went well in Offboard control, exits with a log
- * otherwise.
- */
-bool offb_ctrl_body(mavsdk::Offboard& offboard)
-{
-    const std::string offb_mode = "BODY";
-
-    // Send it once before starting offboard, otherwise it will be rejected.
-    Offboard::VelocityBodyYawspeed stay{};
-    offboard.set_velocity_body(stay);
-
-    Offboard::Result offboard_result = offboard.start();
-    offboard_error_exit(offboard_result, "Offboard start failed: ");
-    offboard_log(offb_mode, "Offboard started");
-
-    offboard_log(offb_mode, "Turn clock-wise and climb");
-    Offboard::VelocityBodyYawspeed cc_and_climb{};
-    cc_and_climb.down_m_s = -1.0f;
-    cc_and_climb.yawspeed_deg_s = 60.0f;
-    offboard.set_velocity_body(cc_and_climb);
-    sleep_for(seconds(5));
-
-    offboard_log(offb_mode, "Turn back anti-clockwise");
-    Offboard::VelocityBodyYawspeed ccw{};
-    ccw.down_m_s = -1.0f;
-    ccw.yawspeed_deg_s = -60.0f;
-    offboard.set_velocity_body(ccw);
-    sleep_for(seconds(5));
-
-    offboard_log(offb_mode, "Wait for a bit");
-    offboard.set_velocity_body(stay);
-    sleep_for(seconds(2));
-
-    offboard_log(offb_mode, "Fly a circle");
-    Offboard::VelocityBodyYawspeed circle{};
-    circle.forward_m_s = 5.0f;
-    circle.yawspeed_deg_s = 30.0f;
-    offboard.set_velocity_body(circle);
-    sleep_for(seconds(15));
-
-    offboard_log(offb_mode, "Wait for a bit");
-    offboard.set_velocity_body(stay);
-    sleep_for(seconds(5));
-
-    offboard_log(offb_mode, "Fly a circle sideways");
-    circle.right_m_s = -5.0f;
-    circle.yawspeed_deg_s = 30.0f;
-    offboard.set_velocity_body(circle);
-    sleep_for(seconds(15));
-
-    offboard_log(offb_mode, "Wait for a bit");
-    offboard.set_velocity_body(stay);
-    sleep_for(seconds(8));
-
-    offboard_result = offboard.stop();
-    offboard_error_exit(offboard_result, "Offboard stop failed: ");
-    offboard_log(offb_mode, "Offboard stopped");
-
-    return true;
-}
-
-/**
  * Does Offboard control using attitude commands.
  *
  * returns true if everything went well in Offboard control, exits with a log
@@ -214,34 +84,65 @@ bool offb_ctrl_attitude(mavsdk::Offboard& offboard)
     offboard_log(offb_mode, "Offboard started");
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    offboard_log(offb_mode, "Thrust 0.5");
-    thrust_value.thrust_value = 0.5f;
+    offboard_log(offb_mode, "Thrust 0.1");
+    thrust_value.thrust_value = 0.1f;
     offboard.set_attitude(thrust_value);
     sleep_for(seconds(2)); // Let yaw settle.
 
+    // offboard_log(offb_mode, "Thrust 0.2");
+    // thrust_value.thrust_value = 0.2f;
+    // offboard.set_attitude(thrust_value);
+    // sleep_for(seconds(2)); // Let yaw settle.
+
+    // offboard_log(offb_mode, "Thrust 0.3");
+    // thrust_value.thrust_value = 0.3f;
+    // offboard.set_attitude(thrust_value);
+    // sleep_for(seconds(2)); // Let yaw settle.
+
+    Offboard::Attitude attitude;
+    attitude.thrust_value = 0.3f;
+    attitude.roll_deg = 0.3f;
+    attitude.pitch_deg = 0.0f;
+    attitude.yaw_deg = 0.0f;
+    offboard.set_attitude(attitude);
+    sleep_for(seconds(5)); // Let yaw settle.
+
+    offboard_log(offb_mode, "Thrust 0.5");
+    thrust_value.thrust_value = 0.5f;
+    offboard.set_attitude(thrust_value);
+    sleep_for(seconds(5)); // Let yaw settle.
+
     offboard_log(offb_mode, "ROLL 30");
     offboard.set_attitude(roll);
-    sleep_for(seconds(2)); // rolling
+    sleep_for(seconds(5)); // rolling
 
     offboard_log(offb_mode, "ROLL -30");
     roll.roll_deg = -30.0f;
     offboard.set_attitude(roll);
-    sleep_for(seconds(2)); // Let yaw settle.
+    sleep_for(seconds(5)); // Let yaw settle.
 
     offboard_log(offb_mode, "ROLL 0");
     roll.roll_deg = 0.0f;
     offboard.set_attitude(roll);
     sleep_for(seconds(2)); // Let yaw settle.
 
-    offboard_log(offb_mode, "Thrust 0.1");
-    thrust_value.thrust_value = 0.1f;
-    offboard.set_attitude(thrust_value);
-    sleep_for(seconds(2)); // Let yaw settle.
-
-    // offboard_log(offb_mode, "ROLL -60");
-    // roll.roll_deg = -60.0f;
-    // offboard.set_attitude(roll);
+    // offboard_log(offb_mode, "Thrust 0.1");
+    // thrust_value.thrust_value = 0.1f;
+    // offboard.set_attitude(thrust_value);
     // sleep_for(seconds(2)); // Let yaw settle.
+
+    // Offboard::PositionNedYaw position_ned_yaw;
+
+    // position_ned_yaw.north_m = 0.1;
+    // position_ned_yaw.down_m = 0;
+    // position_ned_yaw.east_m = 0;
+    // position_ned_yaw.yaw_deg = 0;
+
+    // offboard.set_position_ned(position_ned_yaw);
+    // sleep_for(seconds(2)); // Let yaw settle.
+
+    offboard.set_velocity_body({0.0f, 0.0f, 0.0f, 0.0f});
+    sleep_for(seconds(2)); // Let yaw settle.
 
     // Now, stop offboard mode.
     // offboard_result = offboard.stop();
@@ -306,11 +207,11 @@ int main(int argc, char** argv)
     auto system = mavsdk.systems().at(0);
     auto action = Action{system};
     auto offboard = Offboard{system};
+    auto telemetry = Telemetry{system};
     auto mocap = Mocap{system};
 
     // Send mocap command to Mavsdk
-    mavsdk::Mocap::AttitudePositionMocap mocap_msg;
-    std::vector<int> v = {1, 1, 1};
+    Mocap::AttitudePositionMocap mocap_msg;
 
     mocap_msg.position_body.x_m = 0;
     mocap_msg.position_body.y_m = 0;
@@ -321,19 +222,28 @@ int main(int argc, char** argv)
     mocap_msg.q.y = 0;
     mocap_msg.q.z = 0;
 
-    // mocap.set_attitude_position_mocap(mocap_msg);
+    // Mocap Covariance Matrix
+    std::vector<int> v = {1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1};
+    std::cout << "Size:" << size(mocap_msg.pose_covariance.covariance_matrix);
+    mocap_msg.pose_covariance.covariance_matrix.insert(
+        mocap_msg.pose_covariance.covariance_matrix.end(), std::begin(v), std::end(v));
+
+    Mocap::Result result = mocap.set_attitude_position_mocap(mocap_msg);
+    std::cout << "Mocap Status: " << result << std::endl;
 
     std::cout << "System is ready" << std::endl;
+    std::cout << Mocap::AngularVelocityBody();
+    std::cout << Mocap::SpeedBody();
 
-    // Action::Result arm_result = action.arm();
-    // action_error_exit(arm_result, "Arming failed");
+    // Arm vehicle
+    std::cout << "Arming..." << std::endl;
+    const Action::Result arm_result = action.arm();
 
-    Action::ResultCallback callback;
-    action.arm_async(callback);
-    std::cout << "Armed" << std::endl;
-
-    Action::ResultCallback callback1;
-    action.takeoff_async(callback1);
+    if (arm_result != Action::Result::Success) {
+        std::cout << ERROR_CONSOLE_TEXT << "Arming failed:" << arm_result << NORMAL_CONSOLE_TEXT
+                  << std::endl;
+        return 1;
+    }
 
     //  using attitude control
     bool ret = offb_ctrl_attitude(offboard);
@@ -341,35 +251,9 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    // //  using local NED co-ordinates
-    // ret = offb_ctrl_ned(offboard);
-    // if (ret == false) {
-    //     return EXIT_FAILURE;
-    // }
-
-    // //  using body co-ordinates
-    // ret = offb_ctrl_body(offboard);
-    // if (ret == false) {
-    //     return EXIT_FAILURE;
-    // }
-
-    // const Action::Result land_result = action.land();
-    // action_error_exit(land_result, "Landing failed");
-
-    // // Check if vehicle is still in air
-    // // while (telemetry.in_air()) {
-    // //     std::cout << "Vehicle is landing..." << std::endl;
-    // //     sleep_for(seconds(1));
-    // // }
-    // std::cout << "Landed!" << std::endl;
-
-    // // We are relying on auto-disarming but let's keep watching the telemetry for
-    // // a bit longer.
-    // sleep_for(seconds(3));
-    // std::cout << "Finished..." << std::endl;
-
     std::cout << "Killing Motors";
-    action.kill_async(callback);
+    action.kill();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     return EXIT_SUCCESS;
 }
