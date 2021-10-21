@@ -11,7 +11,6 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/action/action.h>
-#include <mavsdk/plugins/mocap/mocap.h>
 #include <mavsdk/plugins/offboard/offboard.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
 
@@ -60,6 +59,12 @@ std::shared_ptr<System> get_system(Mavsdk &mavsdk) {
   return fut.get();
 }
 
+//
+// Does Offboard control using NED co-ordinates.
+//
+// returns true if everything went well in Offboard control
+//
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     usage(argv[0]);
@@ -81,39 +86,14 @@ int main(int argc, char **argv) {
 
   // Instantiate plugins.
   auto telemetry = Telemetry{system};
-  auto vision = Mocap{system};
+
   std::cout << "System is ready\n";
-  sleep_for(seconds(1));
 
-  // // Send mocap command to Mavsdk
-  Mocap::VisionPositionEstimate vision_msg;
-
-  vision_msg.time_usec = 0;
-
-  vision_msg.position_body.x_m = 1.2;
-  vision_msg.position_body.y_m = 3.4;
-  vision_msg.position_body.z_m = -5.6;
-
-  vision_msg.angle_body.roll_rad = 0.0;
-  vision_msg.angle_body.pitch_rad = 0.0;
-  vision_msg.angle_body.yaw_rad = 1.0;
-
-  std::vector<float> v = {NAN};
-  vision_msg.pose_covariance.covariance_matrix = v;
-
-  // Set posiiton from mocap
   for (;;) {
-    Mocap::Result result = vision.set_vision_position_estimate(vision_msg);
-    std::cout << "Position sent" << result << std::endl;
-    sleep_for(std::chrono::milliseconds(30));
+
+    std::cout << "Attitude euler: " << telemetry.position_velocity_ned()
+              << '\n';
+
+    sleep_for(std::chrono::milliseconds(10));
   }
-
-  sleep_for(std::chrono::milliseconds(500));
-
-  // We are relying on auto-disarming but let's keep watching the telemetry for
-  // a bit longer.
-  sleep_for(seconds(1));
-  std::cout << "Finished...\n";
-
-  return 0;
 }

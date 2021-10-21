@@ -85,6 +85,15 @@
         "semaphore": "cpp",
         "stop_token": "cpp",
         "cfenv": "cpp",
-        "cinttypes": "cpp"
-    }
+        "cinttypes": "cpp",
+        "csignal": "cpp",
+        "fstream": "cpp",
+        "stack": "cpp",
+        "strstream": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp",
+        "any": "cpp"
+    },
+    "cortex-debug.armToolchainPath": "/usr/local/bin",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

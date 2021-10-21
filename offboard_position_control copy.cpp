@@ -1,3 +1,4 @@
+//
 // Example that demonstrates offboard control using attitude, velocity control
 // in NED (North-East-Down), and velocity control in body (Forward-Right-Down)
 // coordinates.
@@ -80,46 +81,41 @@ bool offb_ctrl_ned(mavsdk::Offboard &offboard) {
   std::cout << "Offboard started\n";
   std::cout << "Turn to face East\n";
 
-  Offboard::VelocityNedYaw turn_east{};
-  turn_east.yaw_deg = 90.0f;
-  offboard.set_velocity_ned(turn_east);
-  sleep_for(seconds(1)); // Let yaw settle.
+  // Go up
+  std::cout << "Go up 0.5 m east\n";
+  Offboard::PositionNedYaw position_msg{};
+  position_msg.down_m = -2.0f;
 
-  {
-    const float step_size = 0.01f;
-    const float one_cycle = 2.0f * (float)M_PI;
-    const unsigned steps = 2 * unsigned(one_cycle / step_size);
+  offboard.set_position_ned(position_msg);
+  sleep_for(seconds(5));
 
-    std::cout << "Go North and back South\n";
+  // Go front
+  std::cout << "Go up 0.5 m east\n";
+  position_msg.north_m = 1.0f;
 
-    for (unsigned i = 0; i < steps; ++i) {
-      float vx = 5.0f * sinf(i * step_size);
-      Offboard::VelocityNedYaw north_and_back_south{};
-      north_and_back_south.north_m_s = vx;
-      north_and_back_south.yaw_deg = 90.0f;
-      offboard.set_velocity_ned(north_and_back_south);
-      sleep_for(milliseconds(10));
-    }
-  }
+  offboard.set_position_ned(position_msg);
+  sleep_for(seconds(5));
 
-  std::cout << "Turn to face West\n";
-  Offboard::VelocityNedYaw turn_west{};
-  turn_west.yaw_deg = 270.0f;
-  offboard.set_velocity_ned(turn_west);
-  sleep_for(seconds(2));
+  // Go right
+  std::cout << "Go up 0.5 m east\n";
+  position_msg.east_m = 1.0f;
 
-  std::cout << "Go up 2 m/s, turn to face South\n";
-  Offboard::VelocityNedYaw up_and_south{};
-  up_and_south.down_m_s = -2.0f;
-  up_and_south.yaw_deg = 180.0f;
-  offboard.set_velocity_ned(up_and_south);
-  sleep_for(seconds(4));
+  offboard.set_position_ned(position_msg);
+  sleep_for(seconds(5));
 
-  std::cout << "Go down 1 m/s, turn to face North\n";
-  Offboard::VelocityNedYaw down_and_north{};
-  up_and_south.down_m_s = 1.0f;
-  offboard.set_velocity_ned(down_and_north);
-  sleep_for(seconds(4));
+  // Go back
+  std::cout << "Go up 0.5 m east\n";
+  position_msg.north_m = 0.0f;
+
+  offboard.set_position_ned(position_msg);
+  sleep_for(seconds(5));
+
+  // Go left
+  std::cout << "Go up 0.5 m east\n";
+  position_msg.east_m = 0.0f;
+
+  offboard.set_position_ned(position_msg);
+  sleep_for(seconds(5));
 
   offboard_result = offboard.stop();
   if (offboard_result != Offboard::Result::Success) {
@@ -155,14 +151,14 @@ bool offb_ctrl_body(mavsdk::Offboard &offboard) {
 
   std::cout << "Turn clock-wise and climb\n";
   Offboard::VelocityBodyYawspeed cc_and_climb{};
-  cc_and_climb.down_m_s = -1.0f;
+  cc_and_climb.down_m_s = -0.1f;
   cc_and_climb.yawspeed_deg_s = 60.0f;
   offboard.set_velocity_body(cc_and_climb);
   sleep_for(seconds(5));
 
   std::cout << "Turn back anti-clockwise\n";
   Offboard::VelocityBodyYawspeed ccw{};
-  ccw.down_m_s = -1.0f;
+  ccw.down_m_s = -0.1f;
   ccw.yawspeed_deg_s = -60.0f;
   offboard.set_velocity_body(ccw);
   sleep_for(seconds(5));
@@ -295,36 +291,38 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  auto in_air_promise = std::promise<void>{};
-  auto in_air_future = in_air_promise.get_future();
-  telemetry.subscribe_landed_state(
-      [&telemetry, &in_air_promise](Telemetry::LandedState state) {
-        if (state == Telemetry::LandedState::InAir) {
-          std::cout << "Taking off has finished\n.";
-          telemetry.subscribe_landed_state(nullptr);
-          in_air_promise.set_value();
-        }
-      });
-  in_air_future.wait_for(seconds(10));
-  if (in_air_future.wait_for(seconds(3)) == std::future_status::timeout) {
-    std::cerr << "Takeoff timed out.\n";
-    return 1;
-  }
+  // auto in_air_promise = std::promise<void>{};
+  // auto in_air_future = in_air_promise.get_future();
+  // telemetry.subscribe_landed_state(
+  //     [&telemetry, &in_air_promise](Telemetry::LandedState state) {
+  //       if (state == Telemetry::LandedState::InAir) {
+  //         std::cout << "Taking off has finished\n.";
+  //         telemetry.subscribe_landed_state(nullptr);
+  //         in_air_promise.set_value();
+  //       }
+  //     });
+  // in_air_future.wait_for(seconds(10));
+  // if (in_air_future.wait_for(seconds(6)) == std::future_status::timeout) {
+  //   std::cerr << "Takeoff timed out.\n";
+  //   return 1;
+  // }
 
-  //  using attitude control
-  if (!offb_ctrl_attitude(offboard)) {
-    return 1;
-  }
+  // //  using attitude control
+  // if (!offb_ctrl_attitude(offboard)) {
+  //   return 1;
+  // }
+
+  sleep_for(seconds(8));
 
   //  using local NED co-ordinates
   if (!offb_ctrl_ned(offboard)) {
     return 1;
   }
 
-  //  using body co-ordinates
-  if (!offb_ctrl_body(offboard)) {
-    return 1;
-  }
+  // //  using body co-ordinates
+  // if (!offb_ctrl_body(offboard)) {
+  //   return 1;
+  // }
 
   const auto land_result = action.land();
   if (land_result != Action::Result::Success) {
