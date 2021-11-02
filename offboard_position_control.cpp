@@ -87,156 +87,35 @@ bool offb_ctrl_ned(mavsdk::Offboard &offboard) {
   position_msg.down_m = -2.0f;
 
   offboard.set_position_ned(position_msg);
-  sleep_for(seconds(5));
+  sleep_for(seconds(4));
 
   // Go front
   std::cout << "Go up 0.5 m east\n";
   position_msg.north_m = 1.0f;
 
   offboard.set_position_ned(position_msg);
-  sleep_for(seconds(5));
+  sleep_for(seconds(4));
 
   // Go right
   std::cout << "Go up 0.5 m east\n";
   position_msg.east_m = 1.0f;
 
   offboard.set_position_ned(position_msg);
-  sleep_for(seconds(5));
+  sleep_for(seconds(4));
 
   // Go back
   std::cout << "Go up 0.5 m east\n";
   position_msg.north_m = 0.0f;
 
   offboard.set_position_ned(position_msg);
-  sleep_for(seconds(5));
+  sleep_for(seconds(4));
 
   // Go left
   std::cout << "Go up 0.5 m east\n";
   position_msg.east_m = 0.0f;
 
   offboard.set_position_ned(position_msg);
-  sleep_for(seconds(5));
-
-  offboard_result = offboard.stop();
-  if (offboard_result != Offboard::Result::Success) {
-    std::cerr << "Offboard stop failed: " << offboard_result << '\n';
-    return false;
-  }
-  std::cout << "Offboard stopped\n";
-
-  return true;
-}
-
-//
-// Does Offboard control using body co-ordinates.
-// Body coordinates really means world coordinates rotated by the yaw of the
-// vehicle, so if the vehicle pitches down, the forward axis does still point
-// forward and not down into the ground.
-//
-// returns true if everything went well in Offboard control.
-//
-bool offb_ctrl_body(mavsdk::Offboard &offboard) {
-  std::cout << "Starting Offboard velocity control in body coordinates\n";
-
-  // Send it once before starting offboard, otherwise it will be rejected.
-  Offboard::VelocityBodyYawspeed stay{};
-  offboard.set_velocity_body(stay);
-
-  Offboard::Result offboard_result = offboard.start();
-  if (offboard_result != Offboard::Result::Success) {
-    std::cerr << "Offboard start failed: " << offboard_result << '\n';
-    return false;
-  }
-  std::cout << "Offboard started\n";
-
-  std::cout << "Turn clock-wise and climb\n";
-  Offboard::VelocityBodyYawspeed cc_and_climb{};
-  cc_and_climb.down_m_s = -0.1f;
-  cc_and_climb.yawspeed_deg_s = 60.0f;
-  offboard.set_velocity_body(cc_and_climb);
-  sleep_for(seconds(5));
-
-  std::cout << "Turn back anti-clockwise\n";
-  Offboard::VelocityBodyYawspeed ccw{};
-  ccw.down_m_s = -0.1f;
-  ccw.yawspeed_deg_s = -60.0f;
-  offboard.set_velocity_body(ccw);
-  sleep_for(seconds(5));
-
-  std::cout << "Wait for a bit\n";
-  offboard.set_velocity_body(stay);
-  sleep_for(seconds(2));
-
-  std::cout << "Fly a circle\n";
-  Offboard::VelocityBodyYawspeed circle{};
-  circle.forward_m_s = 5.0f;
-  circle.yawspeed_deg_s = 30.0f;
-  offboard.set_velocity_body(circle);
-  sleep_for(seconds(15));
-
-  std::cout << "Wait for a bit\n";
-  offboard.set_velocity_body(stay);
-  sleep_for(seconds(5));
-
-  std::cout << "Fly a circle sideways\n";
-  circle.right_m_s = -5.0f;
-  circle.yawspeed_deg_s = 30.0f;
-  offboard.set_velocity_body(circle);
-  sleep_for(seconds(15));
-
-  std::cout << "Wait for a bit\n";
-  offboard.set_velocity_body(stay);
-  sleep_for(seconds(8));
-
-  offboard_result = offboard.stop();
-  if (offboard_result != Offboard::Result::Success) {
-    std::cerr << "Offboard stop failed: " << offboard_result << '\n';
-    return false;
-  }
-  std::cout << "Offboard stopped\n";
-
-  return true;
-}
-
-//
-// Does Offboard control using attitude commands.
-//
-// returns true if everything went well in Offboard control.
-//
-bool offb_ctrl_attitude(mavsdk::Offboard &offboard) {
-  std::cout << "Starting Offboard attitude control\n";
-
-  // Send it once before starting offboard, otherwise it will be rejected.
-  Offboard::Attitude roll{};
-  roll.roll_deg = 30.0f;
-  roll.thrust_value = 0.6f;
-  offboard.set_attitude(roll);
-
-  Offboard::Result offboard_result = offboard.start();
-  if (offboard_result != Offboard::Result::Success) {
-    std::cerr << "Offboard start failed: " << offboard_result << '\n';
-    return false;
-  }
-  std::cout << "Offboard started\n";
-
-  std::cout << "Roll 30 degrees to the right\n";
-  offboard.set_attitude(roll);
-  sleep_for(seconds(2));
-
-  std::cout << "Stay horizontal\n";
-  roll.roll_deg = 0.0f;
-  offboard.set_attitude(roll);
-  sleep_for(seconds(1));
-
-  std::cout << "Roll 30 degrees to the left\n";
-  roll.roll_deg = -30.0f;
-  offboard.set_attitude(roll);
-  sleep_for(seconds(2));
-
-  std::cout << "Stay horizontal\n";
-  roll.roll_deg = 0.0f;
-  offboard.set_attitude(roll);
-  sleep_for(seconds(2));
+  sleep_for(seconds(4));
 
   offboard_result = offboard.stop();
   if (offboard_result != Offboard::Result::Success) {

@@ -90,114 +90,17 @@ bool offb_ctrl_attitude(mavsdk::Offboard &offboard) {
   attitude_msg.roll_deg = 0.0f;
   attitude_msg.pitch_deg = 0.0f;
   attitude_msg.yaw_deg = 0.0f;
-  attitude_msg.thrust_value = 0.15f;
+
+  // for (float i = 0.3; i < 0.5; i += 0.05) {
+  //   attitude_msg.thrust_value = i;
+  //   offboard.set_attitude(attitude_msg);
+  //   std::cout << "thrust Command:" << i << std::endl;
+  //   sleep_for(seconds(15));
+  // }
+
+  attitude_msg.thrust_value = 0.5;
   offboard.set_attitude(attitude_msg);
-  sleep_for(seconds(3));
-
-  std::cout << "Roll 30 degrees to the left\n";
-  attitude_msg.roll_deg = 30.0f;
-  attitude_msg.pitch_deg = 0.0f;
-  attitude_msg.yaw_deg = 0.0f;
-  attitude_msg.thrust_value = 0.15f;
-  offboard.set_attitude(attitude_msg);
-  sleep_for(seconds(1));
-
-  std::cout << "Roll to hover position\n";
-  attitude_msg.roll_deg = 0.0f;
-  attitude_msg.pitch_deg = 0.0f;
-  attitude_msg.yaw_deg = 0.0f;
-  attitude_msg.thrust_value = 0.15f;
-  offboard.set_attitude(attitude_msg);
-  sleep_for(seconds(1));
-
-  std::cout << "Roll 30 degrees to the right\n";
-  attitude_msg.roll_deg = -30.0f;
-  attitude_msg.pitch_deg = 0.0f;
-  attitude_msg.yaw_deg = 0.0f;
-  attitude_msg.thrust_value = 0.15f;
-  offboard.set_attitude(attitude_msg);
-  sleep_for(seconds(1));
-
-  std::cout << "Stay horizontal\n";
-  attitude_msg.roll_deg = 0.0f;
-  attitude_msg.pitch_deg = 0.0f;
-  attitude_msg.yaw_deg = 0.0f;
-  attitude_msg.thrust_value = 0.15f;
-  offboard.set_attitude(attitude_msg);
-  sleep_for(seconds(1));
-
-  // std::cout << "Pitch 30 degrees to the left\n";
-  // attitude_msg.roll_deg = 0.0f;
-  // attitude_msg.pitch_deg = 30.0f;
-  // attitude_msg.yaw_deg = 0.0f;
-  // attitude_msg.thrust_value = 0.15f;
-  // offboard.set_attitude(attitude_msg);
-  // sleep_for(seconds(1));
-
-  // std::cout << "Pitch to hover position\n";
-  // attitude_msg.roll_deg = 0.0f;
-  // attitude_msg.pitch_deg = 0.0f;
-  // attitude_msg.yaw_deg = 0.0f;
-  // attitude_msg.thrust_value = 0.15f;
-  // offboard.set_attitude(attitude_msg);
-  // sleep_for(seconds(1));
-
-  // std::cout << "Pitch 30 degrees to the right\n";
-  // attitude_msg.roll_deg = 0.0f;
-  // attitude_msg.pitch_deg = -30.0f;
-  // attitude_msg.yaw_deg = 0.0f;
-  // attitude_msg.thrust_value = 0.15f;
-  // offboard.set_attitude(attitude_msg);
-  // sleep_for(seconds(1));
-
-  // std::cout << "yaw 180\n";
-  // attitude_msg.roll_deg = 0.0f;
-  // attitude_msg.pitch_deg = 0.0f;
-  // attitude_msg.yaw_deg = 180.0f;
-  // attitude_msg.thrust_value = 0.15f;
-  // offboard.set_attitude(attitude_msg);
-  // sleep_for(seconds(1));
-
-  // std::cout << "yaw 0\n";
-  // attitude_msg.roll_deg = 0.0f;
-  // attitude_msg.pitch_deg = 0.0f;
-  // attitude_msg.yaw_deg = 0.0f;
-  // attitude_msg.thrust_value = 0.15f;
-  // offboard.set_attitude(attitude_msg);
-  // sleep_for(seconds(1));
-
-  // std::cout << "Raise throttle\n";
-  // attitude_msg.roll_deg = 0.0f;
-  // attitude_msg.pitch_deg = 0.0f;
-  // attitude_msg.yaw_deg = 0.0f;
-  // // Hover thrust Estimate = 0.5
-  // attitude_msg.thrust_value = 0.45f;
-  // offboard.set_attitude(attitude_msg);
-  // sleep_for(seconds(20));
-
-  // std::cout << "Stay horizontal\n";
-  // attitude_msg.roll_deg = 0.0f;
-  // attitude_msg.pitch_deg = 0.0f;
-  // attitude_msg.yaw_deg = 0.0f;
-  // attitude_msg.thrust_value = 0.3f;
-  // offboard.set_attitude(attitude_msg);
-  // sleep_for(seconds(1));
-
-  std::cout << "Stay horizontal\n";
-  attitude_msg.roll_deg = 0.0f;
-  attitude_msg.pitch_deg = 0.0f;
-  attitude_msg.yaw_deg = 0.0f;
-  attitude_msg.thrust_value = 0.2f;
-  offboard.set_attitude(attitude_msg);
-  sleep_for(seconds(1));
-
-  std::cout << "Set thrust to zero\n";
-  attitude_msg.roll_deg = 0.0f;
-  attitude_msg.pitch_deg = 0.0f;
-  attitude_msg.yaw_deg = 0.0f;
-  attitude_msg.thrust_value = 0.0f;
-  offboard.set_attitude(attitude_msg);
-  sleep_for(seconds(2));
+  sleep_for(seconds(15));
 
   // offboard_result = offboard.stop();
   // sleep_for(seconds(2));
